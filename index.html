@@ -474,7 +474,7 @@
       showMessage('loginMessage', 'Configuration saved! You can now use the app.', 'success');
     }
 
-    // API Call Helper
+    // API Call Helper (CORS-friendly)
     async function callApi(action, data = {}) {
       if (!API_URL) {
         alert('Please configure the API URL first');
@@ -482,10 +482,11 @@
       }
 
       try {
-        const response = await fetch(API_URL + '?action=' + action, {
+        // Use text/plain to avoid CORS preflight
+        const response = await fetch(API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action, ...data })
         });
         
         return await response.json();
@@ -559,7 +560,7 @@
         return;
       }
       
-      const result = await callApi('createSchedule', scheduleData);
+      const result = await callApi('createSchedule', { scheduleData });
       
       if (result && result.success) {
         showMessage('createMessage', 'Schedule created successfully!', 'success');
