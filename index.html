@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schedule Manager</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .content {
+      padding: 30px;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-weight: 600;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 16px;
+      transition: border 0.3s;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    button {
+      padding: 12px 30px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    button.secondary {
+      background: #6c757d;
+    }
+
+    button.success {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+
+    .grid-section {
+      margin-top: 30px;
+      overflow-x: auto;
+    }
+
+    .schedule-grid {
+      display: inline-block;
+      border: 3px solid #667eea;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .grid-row {
+      display: flex;
+    }
+
+    .grid-cell {
+      width: 70px;
+      height: 50px;
+      border: 1px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s;
+    }
+
+    .grid-cell:hover:not(.grid-header):not(.day-label) {
+      transform: scale(1.05);
+      z-index: 10;
+    }
+
+    .grid-header {
+      font-weight: bold;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      cursor: default;
+      font-size: 12px;
+    }
+
+    .day-label {
+      width: 100px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      cursor: default;
+    }
+
+    .grid-cell input[type="checkbox"] {
+      width: 22px;
+      height: 22px;
+      cursor: pointer;
+      accent-color: #667eea;
+    }
+
+    .message {
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+
+    .success-msg {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .error-msg {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .info-box {
+      background: #e7f3ff;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-left: 4px solid #667eea;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin: 20px 0;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .legend-color {
+      width: 40px;
+      height: 25px;
+      border: 2px solid #333;
+      border-radius: 4px;
+    }
+
+    .config-section {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .heatmap-grid {
+      display: inline-block;
+      border: 3px solid #667eea;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 10px;
+    }
+
+    .tab {
+      padding: 10px 20px;
+      background: #f8f9fa;
+      border: none;
+      border-radius: 6px 6px 0 0;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    #apiKeySection {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+      font-size: 18px;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📅 Schedule Manager</h1>
+      <p>Smart scheduling with availability tracking</p>
+    </div>
+
+    <div class="content">
+      <!-- API Configuration -->
+      <div id="apiKeySection">
+        <h3>⚙️ Google Apps Script Configuration</h3>
+        <p style="margin: 10px 0;">Enter your deployed Google Apps Script Web App URL:</p>
+        <div class="form-group">
+          <input type="text" id="apiUrl" placeholder="https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec">
+        </div>
+        <button onclick="saveApiUrl()">Save Configuration</button>
+        <p style="margin-top: 10px; font-size: 14px; color: #666;">
+          Deploy the Apps Script as a web app and paste the URL here.
+        </p>
+      </div>
+
+      <!-- Login Page -->
+      <div id="loginPage" class="page active">
+        <h2>Welcome</h2>
+        <div class="tabs">
+          <button class="tab active" onclick="switchLoginTab('admin')">Admin Login</button>
+          <button class="tab" onclick="switchLoginTab('user')">User Access</button>
+        </div>
+
+        <div id="adminLoginForm">
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="adminUser" placeholder="admin">
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="adminPass" placeholder="admin123">
+          </div>
+          <button onclick="loginAdmin()">Login as Admin</button>
+        </div>
+
+        <div id="userLoginForm" style="display: none;">
+          <div class="form-group">
+            <label>Schedule Name</label>
+            <input type="text" id="scheduleName" placeholder="e.g., Weekly Review">
+          </div>
+          <div class="form-group">
+            <label>Your Name</label>
+            <input type="text" id="userName" placeholder="e.g., John Doe">
+          </div>
+          <button class="success" onclick="joinSchedule()">Join Schedule</button>
+        </div>
+
+        <div id="loginMessage"></div>
+      </div>
+
+      <!-- Admin Page -->
+      <div id="adminPage" class="page">
+        <h2>Admin Dashboard</h2>
+        <button class="secondary" onclick="logout()">Logout</button>
+
+        <div class="tabs" style="margin-top: 20px;">
+          <button class="tab active" onclick="switchAdminTab('create')">Create Schedule</button>
+          <button class="tab" onclick="switchAdminTab('calculate')">Calculate Availability</button>
+          <button class="tab" onclick="switchAdminTab('list')">View Schedules</button>
+        </div>
+
+        <div id="createTab" class="config-section">
+          <h3>Create New Schedule</h3>
+          <div class="form-group">
+            <label>Schedule Name</label>
+            <input type="text" id="newScheduleName" placeholder="e.g., Weekly Review">
+          </div>
+          <div class="form-group">
+            <label>Time Interval (minutes)</label>
+            <input type="number" id="scheduleInterval" value="30" min="5" step="5">
+          </div>
+          <div class="form-group">
+            <label>Start Time (minutes from midnight)</label>
+            <input type="number" id="scheduleStart" value="540" placeholder="540 = 9:00 AM">
+            <small>Example: 540 = 9:00 AM, 720 = 12:00 PM, 1080 = 6:00 PM</small>
+          </div>
+          <div class="form-group">
+            <label>End Time (minutes from midnight)</label>
+            <input type="number" id="scheduleEnd" value="1080" placeholder="1080 = 6:00 PM">
+          </div>
+          <div class="form-group">
+            <label>Meeting Duration (minutes)</label>
+            <input type="number" id="scheduleDuration" value="90" min="5" step="5">
+          </div>
+          <button onclick="createSchedule()">Create Schedule</button>
+          <div id="createMessage"></div>
+        </div>
+
+        <div id="calculateTab" class="config-section" style="display: none;">
+          <h3>Calculate Best Meeting Times</h3>
+          <div class="form-group">
+            <label>Select Schedule</label>
+            <input type="text" id="calcScheduleName" placeholder="Schedule Name">
+          </div>
+          <button class="success" onclick="calculateSchedule()">Calculate Availability</button>
+          <div id="calcMessage"></div>
+          <div id="heatmapContainer"></div>
+        </div>
+
+        <div id="listTab" class="config-section" style="display: none;">
+          <h3>Existing Schedules</h3>
+          <button onclick="loadSchedules()">Refresh List</button>
+          <div id="schedulesList" style="margin-top: 20px;"></div>
+        </div>
+      </div>
+
+      <!-- User Page -->
+      <div id="userPage" class="page">
+        <h2>Your Availability</h2>
+        <button class="secondary" onclick="logout()">Back to Home</button>
+
+        <div id="userLoading" class="loading">
+          <div class="spinner"></div>
+          <p>Loading schedule...</p>
+        </div>
+
+        <div id="userContent" style="display: none;">
+          <div class="info-box">
+            <strong>Schedule:</strong> <span id="userScheduleName"></span><br>
+            <strong>User:</strong> <span id="userUserName"></span><br>
+            <strong>Meeting Duration:</strong> <span id="userMeetingDuration"></span> minutes
+          </div>
+
+          <div class="legend">
+            <div><strong>Color Legend (availability for full meeting):</strong></div>
+            <div class="legend-item">
+              <div class="legend-color" style="background: #f0f0f0;"></div>
+              <span>0% available</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background: #ffcccc;"></div>
+              <span>1-24%</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background: #ffaa99;"></div>
+              <span>25-49%</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background: #88dd88;"></div>
+              <span>50-74%</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background: #44cc44;"></div>
+              <span>75-100%</span>
+            </div>
+          </div>
+
+          <p><strong>Instructions:</strong> Check boxes when you're available. Click and drag to select multiple slots.</p>
+
+          <div class="grid-section">
+            <div class="schedule-grid" id="userGrid"></div>
+          </div>
+
+          <div style="margin-top: 20px;">
+            <button class="success" onclick="saveUserSchedule()">💾 Save Availability</button>
+            <button onclick="loadUserData()">🔄 Refresh</button>
+          </div>
+          <div id="userMessage"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let API_URL = '';
+    let currentScheduleData = null;
+    let currentAvailability = null;
+    let isDragging = false;
+    let dragStartValue = null;
+    let currentUser = { scheduleName: '', userName: '' };
+
+    // Load saved API URL
+    window.onload = function() {
+      const saved = localStorage.getItem('scheduleApiUrl');
+      if (saved) {
+        document.getElementById('apiUrl').value = saved;
+        API_URL = saved;
+        document.getElementById('apiKeySection').style.display = 'none';
+      }
+    };
+
+    function saveApiUrl() {
+      const url = document.getElementById('apiUrl').value.trim();
+      if (!url) {
+        alert('Please enter a valid URL');
+        return;
+      }
+      API_URL = url;
+      localStorage.setItem('scheduleApiUrl', url);
+      document.getElementById('apiKeySection').style.display = 'none';
+      showMessage('loginMessage', 'Configuration saved! You can now use the app.', 'success');
+    }
+
+    // API Call Helper
+    async function callApi(action, data = {}) {
+      if (!API_URL) {
+        alert('Please configure the API URL first');
+        return null;
+      }
+
+      try {
+        const response = await fetch(API_URL + '?action=' + action, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        return await response.json();
+      } catch (error) {
+        console.error('API Error:', error);
+        return { success: false, message: 'Connection error: ' + error.message };
+      }
+    }
+
+    // Navigation
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(pageId).classList.add('active');
+    }
+
+    function switchLoginTab(tab) {
+      document.querySelectorAll('#loginPage .tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      if (tab === 'admin') {
+        document.getElementById('adminLoginForm').style.display = 'block';
+        document.getElementById('userLoginForm').style.display = 'none';
+      } else {
+        document.getElementById('adminLoginForm').style.display = 'none';
+        document.getElementById('userLoginForm').style.display = 'block';
+      }
+    }
+
+    function switchAdminTab(tab) {
+      document.querySelectorAll('#adminPage .tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      document.getElementById('createTab').style.display = tab === 'create' ? 'block' : 'none';
+      document.getElementById('calculateTab').style.display = tab === 'calculate' ? 'block' : 'none';
+      document.getElementById('listTab').style.display = tab === 'list' ? 'block' : 'none';
+      
+      if (tab === 'list') loadSchedules();
+    }
+
+    function logout() {
+      showPage('loginPage');
+      document.getElementById('loginMessage').innerHTML = '';
+    }
+
+    // Admin Functions
+    async function loginAdmin() {
+      const username = document.getElementById('adminUser').value;
+      const password = document.getElementById('adminPass').value;
+      
+      const result = await callApi('validateAdmin', { username, password });
+      
+      if (result && result.success) {
+        showPage('adminPage');
+        loadSchedules();
+      } else {
+        showMessage('loginMessage', 'Invalid credentials', 'error');
+      }
+    }
+
+    async function createSchedule() {
+      const scheduleData = {
+        schedule_name: document.getElementById('newScheduleName').value,
+        schedule_interval: parseInt(document.getElementById('scheduleInterval').value),
+        schedule_start: parseInt(document.getElementById('scheduleStart').value),
+        schedule_end: parseInt(document.getElementById('scheduleEnd').value),
+        schedule_duration: parseInt(document.getElementById('scheduleDuration').value)
+      };
+      
+      if (!scheduleData.schedule_name) {
+        showMessage('createMessage', 'Please enter a schedule name', 'error');
+        return;
+      }
+      
+      const result = await callApi('createSchedule', scheduleData);
+      
+      if (result && result.success) {
+        showMessage('createMessage', 'Schedule created successfully!', 'success');
+        document.getElementById('newScheduleName').value = '';
+        loadSchedules();
+      } else {
+        showMessage('createMessage', result?.message || 'Error creating schedule', 'error');
+      }
+    }
+
+    async function loadSchedules() {
+      const result = await callApi('getSchedules');
+      
+      if (result && result.schedules) {
+        const list = document.getElementById('schedulesList');
+        
+        if (result.schedules.length === 0) {
+          list.innerHTML = '<p>No schedules created yet.</p>';
+          return;
+        }
+        
+        list.innerHTML = result.schedules.map(s => `
+          <div style="background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #667eea;">
+            <strong style="font-size: 18px;">${s.schedule_name}</strong><br>
+            <span style="color: #666;">
+              Interval: ${s.schedule_interval} min | 
+              ${formatTime(s.schedule_start)} - ${formatTime(s.schedule_end)} | 
+              Duration: ${s.schedule_duration} min
+            </span>
+          </div>
+        `).join('');
+      }
+    }
+
+    async function calculateSchedule() {
+      const scheduleName = document.getElementById('calcScheduleName').value;
+      
+      if (!scheduleName) {
+        showMessage('calcMessage', 'Please enter a schedule name', 'error');
+        return;
+      }
+      
+      const result = await callApi('calculateAvailability', { scheduleName });
+      
+      if (result && result.success) {
+        showMessage('calcMessage', `Analysis complete for ${result.userCount} users`, 'success');
+        displayHeatmap(result);
+      } else {
+        showMessage('calcMessage', result?.message || 'Error calculating', 'error');
+      }
+    }
+
+    function displayHeatmap(result) {
+      const container = document.getElementById('heatmapContainer');
+      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const dayKeys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+      
+      const slotCount = Math.floor((result.scheduleInfo.schedule_end - result.scheduleInfo.schedule_start) / result.scheduleInfo.schedule_interval);
+      
+      let html = '<div style="margin-top: 20px;"><div class="heatmap-grid"><div class="grid-row">';
+      html += '<div class="grid-cell grid-header day-label">Day</div>';
+      
+      for (let slot = 0; slot < slotCount; slot++) {
+        const time = result.scheduleInfo.schedule_start + (slot * result.scheduleInfo.schedule_interval);
+        html += `<div class="grid-cell grid-header">${formatTime(time)}</div>`;
+      }
+      html += '</div>';
+      
+      dayKeys.forEach((dayKey, idx) => {
+        html += '<div class="grid-row"><div class="grid-cell day-label">${days[idx]}</div>';
+        
+        result.availability[dayKey].forEach(slotData => {
+          const color = getColorForPercentage(slotData.percentage);
+          const textColor = slotData.percentage > 0.5 ? 'white' : 'black';
+          html += `<div class="grid-cell" style="background: ${color}; color: ${textColor}; font-weight: bold;">
+            ${slotData.available}/${slotData.total}
+          </div>`;
+        });
+        
+        html += '</div>';
+      });
+      
+      html += '</div></div>';
+      container.innerHTML = html;
+    }
+
+    // User Functions
+    async function joinSchedule() {
+      const scheduleName = document.getElementById('scheduleName').value;
+      const userName = document.getElementById('userName').value;
+      
+      if (!scheduleName || !userName) {
+        showMessage('loginMessage', 'Please fill in all fields', 'error');
+        return;
+      }
+      
+      currentUser = { scheduleName, userName };
+      
+      const result = await callApi('joinSchedule', { scheduleName, userName });
+      
+      if (result && result.success) {
+        showPage('userPage');
+        loadUserData();
+      } else {
+        showMessage('loginMessage', result?.message || 'Error joining schedule', 'error');
+      }
+    }
+
+    async function loadUserData() {
+      document.getElementById('userLoading').style.display = 'block';
+      document.getElementById('userContent').style.display = 'none';
+      
+      const scheduleResult = await callApi('getUserSchedule', currentUser);
+      
+      if (!scheduleResult || !scheduleResult.schedule) {
+        showMessage('userMessage', 'Error loading schedule', 'error');
+        return;
+      }
+      
+      currentScheduleData = scheduleResult.schedule;
+      
+      const availResult = await callApi('calculateAvailability', { scheduleName: currentUser.scheduleName });
+      
+      if (availResult && availResult.success) {
+        currentAvailability = availResult.availability;
+      }
+      
+      renderUserGrid();
+      
+      document.getElementById('userLoading').style.display = 'none';
+      document.getElementById('userContent').style.display = 'block';
+    }
+
+    function renderUserGrid() {
+      document.getElementById('userScheduleName').textContent = currentScheduleData.schedule_name;
+      document.getElementById('userUserName').textContent = currentScheduleData.user_name;
+      document.getElementById('userMeetingDuration').textContent = currentScheduleData.schedule_duration;
+      
+      const slotCount = Math.floor((currentScheduleData.schedule_end - currentScheduleData.schedule_start) / currentScheduleData.schedule_interval);
+      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const dayKeys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+      
+      let html = '<div class="grid-row">';
+      html += '<div class="grid-cell grid-header day-label">Day</div>';
+      
+      for (let slot = 0; slot < slotCount; slot++) {
+        const time = currentScheduleData.schedule_start + (slot * currentScheduleData.schedule_interval);
+        html += `<div class="grid-cell grid-header">${formatTime(time)}</div>`;
+      }
+      html += '</div>';
+      
+      dayKeys.forEach((dayKey, idx) => {
+        html += '<div class="grid-row"><div class="grid-cell day-label">${days[idx]}</div>';
+        
+        const dayString = currentScheduleData[dayKey + '_string'] || '0'.repeat(slotCount);
+        
+        for (let slot = 0; slot < slotCount; slot++) {
+          const isChecked = dayString[slot] === '1';
+          const bgColor = currentAvailability ? getColorForSlot(dayKey, slot) : '#fff';
+          
+          html += `<div class="grid-cell" 
+                       style="background: ${bgColor};"
+                       data-day="${dayKey}" 
+                       data-slot="${slot}"
+                       onmousedown="startDrag('${dayKey}', ${slot})"
+                       onmouseenter="continueDrag('${dayKey}', ${slot})">
+            <input type="checkbox" ${isChecked ? 'checked' : ''} 
+                   data-day="${dayKey}" 
+                   data-slot="${slot}"
+                   onclick="event.stopPropagation()">
+          </div>`;
+        }
+        
+        html += '</div>';
+      });
+      
+      document.getElementById('userGrid').innerHTML = html;
+      
+      document.addEventListener('mouseup', endDrag);
+    }
+
+    function getColorForSlot(dayKey, slot) {
+      if (!currentAvailability || !currentAvailability[dayKey]) return '#fff';
+      const slotData = currentAvailability[dayKey][slot];
+      if (!slotData) return '#fff';
+      return getColorForPercentage(slotData.percentage);
+    }
+
+    function getColorForPercentage(percentage) {
+      if (percentage === 0) return '#f0f0f0';
+      if (percentage < 0.25) return '#ffcccc';
+      if (percentage < 0.5) return '#ffaa99';
+      if (percentage < 0.75) return '#88dd88';
+      return '#44cc44';
+    }
+
+    function startDrag(day, slot) {
+      event.preventDefault();
+      isDragging = true;
+      const checkbox = event.currentTarget.querySelector('input[type="checkbox"]');
+      dragStartValue = !checkbox.checked;
+      checkbox.checked = dragStartValue;
+    }
+
+    function continueDrag(day, slot) {
+      if (!isDragging) return;
+      event.preventDefault();
+      const checkbox = event.currentTarget.querySelector('input[type="checkbox"]');
+      checkbox.checked = dragStartValue;
+    }
+
+    function endDrag() {
+      isDragging = false;
+      dragStartValue = null;
+    }
+
+    async function saveUserSchedule() {
+      const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+      const dayStrings = {};
+      
+      days.forEach(day => {
+        const checkboxes = Array.from(document.querySelectorAll(`input[data-day="${day}"]`));
+        checkboxes.sort((a, b) => parseInt(a.dataset.slot) - parseInt(b.dataset.slot));
+        let dayString = '';
+        checkboxes.forEach(cb => {
+          dayString += cb.checked ? '1' : '0';
+        });
+        dayStrings[day + '_string'] = dayString;
+      });
+      
+      const result = await callApi('updateUserSchedule', {
+        scheduleName: currentUser.scheduleName,
+        userName: currentUser.userName,
+        dayStrings
+      });
+      
+      if (result && result.success) {
+        showMessage('userMessage', 'Schedule saved! Refreshing...', 'success');
+        setTimeout(() => loadUserData(), 1000);
+      } else {
+        showMessage('userMessage', result?.message || 'Error saving', 'error');
+      }
+    }
+
+    // Helpers
+    function formatTime(minutes) {
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      const period = hours >= 12 ? 'PM' : 'AM';
+      const displayHours = hours % 12 || 12;
+      return `${displayHours}:${mins.toString().padStart(2, '0')} ${period}`;
+    }
+
+    function showMessage(elementId, message, type) {
+      const element = document.getElementById(elementId);
+      element.className = 'message ' + (type === 'success' ? 'success-msg' : 'error-msg');
+      element.textContent = message;
+    }
+  </script>
+</body>
+</html>
